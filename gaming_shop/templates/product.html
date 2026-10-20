@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — GameGear{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog') }}">Каталог</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('main.catalog', category=product.category_slug) }}">{{ product.category_name }}</a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="product-detail-img">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-fluid rounded"
+                     onerror="this.src='https://via.placeholder.com/500x400/1a1a2e/eee?text=Product'">
+                {% if product.old_price %}
+                <span class="badge-sale large">-{{ ((1 - product.price / product.old_price) * 100)|int }}%</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="product-detail-info">
+                <div class="text-muted mb-1">{{ product.brand }} · {{ product.category_name }}</div>
+                <h1 class="h2 mb-2">{{ product.name }}</h1>
+                
+                <div class="product-rating mb-3">
+                    {% for i in range(5) %}
+                        {% if i < product.rating|int %}
+                        <i class="bi bi-star-fill text-warning"></i>
+                        {% else %}
+                        <i class="bi bi-star text-secondary"></i>
+                        {% endif %}
+                    {% endfor %}
+                    <span class="ms-2">{{ product.rating }}</span>
+                    <span class="text-muted ms-2">({{ reviews|length }} отзывов)</span>
+                </div>
+
+                <div class="price-block mb-4">
+                    <span class="price-current-lg">{{ "{:,.0f}".format(product.price) }} ₽</span>
+                    {% if product.old_price %}
+                    <span class="price-old-lg">{{ "{:,.0f}".format(product.old_price) }} ₽</span>
+                    {% endif %}
+                </div>
+
+                <p class="text-muted mb-4">{{ product.description }}</p>
+
+                {% if product.features %}
+                <div class="mb-4">
+                    <h6>Характеристики:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for feat in product.features.split(',') %}
+                        <span class="badge bg-secondary">{{ feat.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    {% if product.stock > 10 %}
+                    <span class="text-success"><i class="bi bi-check-circle"></i> В наличии ({{ product.stock }} шт.)</span>
+                    {% elif product.stock > 0 %}
+                    <span class="text-warning"><i class="bi bi-exclamation-circle"></i> Осталось мало ({{ product.stock }} шт.)</span>
+                    {% else %}
+                    <span class="text-danger"><i class="bi bi-x-circle"></i> Нет в наличии</span>
+                    {% endif %}
+                </div>
+
+                {% if product.stock > 0 %}
+                    {% if current_user.is_authenticated %}
+                    <form action="{{ url_for('cart.add_to_cart', product_id=product.id) }}" method="post" class="d-flex gap-2 align-items-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="input-group" style="width: 120px;">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(-1)">−</button>
+                            <input type="number" name="quantity" id="qty" value="1" min="1" max="{{ product.stock }}" 
+                                   class="form-control form-control-sm text-center bg-dark text-white border-secondary">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(1)">+</button>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-cart-plus"></i> Добавить в корзину
+                        </button>
+                    </form>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                        <i class="bi bi-box-arrow-in-right"></i> Войдите, чтобы купить
+                    </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews -->
+    <div class="row mt-5">
+        <div class="col-lg-8">
+            <h3 class="mb-4">Отзывы ({{ reviews|length }})</h3>
+            
+            {% if current_user.is_authenticated %}
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-body">
+                    <h6>Оставить отзыв</h6>
+                    <form action="{{ url_for('cart.add_review', product_id=product.id) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label class="form-label">Оценка</label>
+                            <select name="rating" class="form-select bg-dark text-white border-secondary" style="width: auto;">
+                                <option value="5">⭐⭐⭐⭐⭐ Отлично</option>
+                                <option value="4">⭐⭐⭐⭐ Хорошо</option>
+                                <option value="3">⭐⭐⭐ Нормально</option>
+                                <option value="2">⭐⭐ Плохо</option>
+                                <option value="1">⭐ Ужасно</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Комментарий</label>
+                            <textarea name="comment" class="form-control bg-dark text-white border-secondary" rows="3" 
+                                      placeholder="Ваше мнение о товаре..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Отправить отзыв</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if reviews %}
+                {% for review in reviews %}
+                <div class="review-card mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong><i class="bi bi-person-circle"></i> {{ review.username }}</strong>
+                        <div>
+                            {% for i in range(review.rating) %}
+                            <i class="bi bi-star-fill text-warning"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p class="mb-1 mt-2">{{ review.comment or 'Без комментария' }}</p>
+                    <small class="text-muted">{{ review.created_at[:16] }}</small>
+                </div>
+                {% endfor %}
+            {% else %}
+            <p class="text-muted">Пока нет отзывов. Будьте первым!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Related -->
+    {% if related %}
+    <div class="mt-5">
+        <h3 class="mb-4">Похожие товары</h3>
+        <div class="row g-4">
+            {% for p in related %}
+            <div class="col-6 col-md-3">
+                <div class="product-card">
+                    <a href="{{ url_for('main.product_detail', product_id=p.id) }}">
+                        <div class="product-img">
+                            <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x200/1a1a2e/eee?text=Product'">
+                        </div>
+                    </a>
+                    <div class="product-body">
+                        <a href="{{ url_for('main.product_detail', product_id=p.id) }}" class="product-title">{{ p.name }}</a>
+                        <div class="product-price">
+                            <span class="price-current">{{ "{:,.0f}".format(p.price) }} ₽</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function changeQty(delta) {
+    const input = document.getElementById('qty');
+    let val = parseInt(input.value) + delta;
+    if (val < 1) val = 1;
+    if (val > parseInt(input.max)) val = parseInt(input.max);
+    input.value = val;
+}
+</script>
+{% endblock %}

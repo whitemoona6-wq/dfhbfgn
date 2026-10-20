@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — GameGear{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="auth-card">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-plus fs-1 text-primary"></i>
+                    <h2 class="mt-2">Регистрация</h2>
+                    <p class="text-muted">Создайте аккаунт GameGear</p>
+                </div>
+                
+                <form method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <label class="form-label">Имя пользователя</label>
+                        <input type="text" name="username" class="form-control bg-dark text-white border-secondary" 
+                               required autofocus minlength="3" placeholder="gamer123">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" name="email" class="form-control bg-dark text-white border-secondary" 
+                               required placeholder="you@mail.ru">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Пароль</label>
+                        <div class="form-text text-white-50">Минимум 8 символов, хотя бы одна буква и одна цифра</div>
+                        <input type="password" name="password" class="form-control bg-dark text-white border-secondary" 
+                               required minlength="6" placeholder="Мин. 8 символов, буква и цифра">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Подтвердите пароль</label>
+                        <input type="password" name="password2" class="form-control bg-dark text-white border-secondary" 
+                               required minlength="6">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 btn-lg">
+                        <i class="bi bi-person-check"></i> Зарегистрироваться
+                    </button>
+                </form>
+                
+                <div class="text-center mt-4">
+                    <p class="text-muted">Уже есть аккаунт? <a href="{{ url_for('auth.login') }}">Войти</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

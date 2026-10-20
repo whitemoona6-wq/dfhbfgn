@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}GameGear — Главная{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-50 py-5">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-3">Прокачай свой <span class="text-gradient">гейминг</span></h1>
+                <p class="lead text-muted mb-4">Топовая игровая периферия от лучших брендов. Мыши, клавиатуры, наушники и мониторы для побед.</p>
+                <a href="{{ url_for('main.catalog') }}" class="btn btn-primary btn-lg me-2">
+                    <i class="bi bi-grid"></i> Смотреть каталог
+                </a>
+                <a href="{{ url_for('main.catalog', category='mice') }}" class="btn btn-outline-light btn-lg">
+                    Популярные мыши
+                </a>
+            </div>
+            <div class="col-lg-6 text-center d-none d-lg-block">
+                <div class="hero-icons">
+                    <span class="hero-icon">🖱️</span>
+                    <span class="hero-icon">⌨️</span>
+                    <span class="hero-icon">🎧</span>
+                    <span class="hero-icon">🎮</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="section-title mb-4">Категории</h2>
+        <div class="row g-3">
+            {% for cat in categories %}
+            <div class="col-6 col-md-4 col-lg-2">
+                <a href="{{ url_for('main.catalog', category=cat.slug) }}" class="category-card">
+                    <div class="category-icon">{{ cat.icon }}</div>
+                    <div class="category-name">{{ cat.name }}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Popular products -->
+<section class="py-5 bg-darker">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="section-title mb-0">Популярные товары</h2>
+            <a href="{{ url_for('main.catalog') }}" class="btn btn-outline-primary btn-sm">Все товары →</a>
+        </div>
+        <div class="row g-4">
+            {% for product in products %}
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="product-card">
+                    <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-img-link">
+                        <div class="product-img">
+                            <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/300x200/1a1a2e/eee?text={{ product.name[:10] }}'">
+                            {% if product.old_price %}
+                            <span class="badge-sale">-{{ ((1 - product.price / product.old_price) * 100)|int }}%</span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    <div class="product-body">
+                        <div class="product-brand">{{ product.brand }}</div>
+                        <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-title">
+                            {{ product.name }}
+                        </a>
+                        <div class="product-rating">
+                            {% for i in range(5) %}
+                                {% if i < product.rating|int %}
+                                <i class="bi bi-star-fill text-warning"></i>
+                                {% elif i < product.rating %}
+                                <i class="bi bi-star-half text-warning"></i>
+                                {% else %}
+                                <i class="bi bi-star text-secondary"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-1 text-muted small">{{ product.rating }}</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">{{ "{:,.0f}".format(product.price) }} ₽</span>
+                            {% if product.old_price %}
+                            <span class="price-old">{{ "{:,.0f}".format(product.old_price) }} ₽</span>
+                            {% endif %}
+                        </div>
+                        {% if current_user.is_authenticated %}
+                        <form action="{{ url_for('cart.add_to_cart', product_id=product.id) }}" method="post" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-cart-plus"></i> В корзину
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                            <i class="bi bi-cart-plus"></i> Войти для покупки
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Features -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="feature-box">
+                    <i class="bi bi-truck fs-1 text-primary"></i>
+                    <h5 class="mt-3">Быстрая доставка</h5>
+                    <p class="text-muted small">По всей России от 1 дня</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-box">
+                    <i class="bi bi-shield-check fs-1 text-primary"></i>
+                    <h5 class="mt-3">Гарантия качества</h5>
+                    <p class="text-muted small">Официальная гарантия 1-2 года</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-box">
+                    <i class="bi bi-arrow-repeat fs-1 text-primary"></i>
+                    <h5 class="mt-3">Легкий возврат</h5>
+                    <p class="text-muted small">14 дней на возврат без вопросов</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="feature-box">
+                    <i class="bi bi-headset fs-1 text-primary"></i>
+                    <h5 class="mt-3">Поддержка 24/7</h5>
+                    <p class="text-muted small">Всегда на связи для помощи</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

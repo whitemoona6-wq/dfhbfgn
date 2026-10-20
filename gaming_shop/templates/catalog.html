@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Каталог — GameGear{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('main.index') }}">Главная</a></li>
+            <li class="breadcrumb-item active">Каталог</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- Sidebar filters -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-sidebar">
+                <h5 class="mb-3"><i class="bi bi-funnel"></i> Фильтры</h5>
+                
+                <div class="mb-4">
+                    <h6>Категории</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('main.catalog') }}" 
+                           class="list-group-item list-group-item-action {% if not current_category %}active{% endif %}">
+                            Все товары
+                        </a>
+                        {% for cat in categories %}
+                        <a href="{{ url_for('main.catalog', category=cat.slug, q=search, sort=sort, brand=current_brand) }}" 
+                           class="list-group-item list-group-item-action {% if current_category == cat.slug %}active{% endif %}">
+                            {{ cat.icon }} {{ cat.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Бренд</h6>
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('main.catalog', category=current_category, q=search, sort=sort) }}" 
+                           class="list-group-item list-group-item-action {% if not current_brand %}active{% endif %}">
+                            Все бренды
+                        </a>
+                        {% for b in brands %}
+                        <a href="{{ url_for('main.catalog', category=current_category, q=search, sort=sort, brand=b.brand) }}" 
+                           class="list-group-item list-group-item-action {% if current_brand == b.brand %}active{% endif %}">
+                            {{ b.brand }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products -->
+        <div class="col-lg-9">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+                <h2 class="section-title mb-0">
+                    {% if current_category %}
+                        {% for cat in categories if cat.slug == current_category %}
+                            {{ cat.icon }} {{ cat.name }}
+                        {% endfor %}
+                    {% else %}
+                        Все товары
+                    {% endif %}
+                    <small class="text-muted fs-6">({{ products|length }})</small>
+                </h2>
+                
+                <div class="d-flex gap-2 align-items-center">
+                    <label class="text-muted small">Сортировка:</label>
+                    <select class="form-select form-select-sm bg-dark text-white border-secondary" style="width: auto;"
+                            onchange="window.location.href=this.value">
+                        <option value="{{ url_for('main.catalog', category=current_category, q=search, brand=current_brand, sort='rating') }}" 
+                                {% if sort == 'rating' %}selected{% endif %}>По рейтингу</option>
+                        <option value="{{ url_for('main.catalog', category=current_category, q=search, brand=current_brand, sort='price_asc') }}" 
+                                {% if sort == 'price_asc' %}selected{% endif %}>Цена ↑</option>
+                        <option value="{{ url_for('main.catalog', category=current_category, q=search, brand=current_brand, sort='price_desc') }}" 
+                                {% if sort == 'price_desc' %}selected{% endif %}>Цена ↓</option>
+                        <option value="{{ url_for('main.catalog', category=current_category, q=search, brand=current_brand, sort='name') }}" 
+                                {% if sort == 'name' %}selected{% endif %}>По названию</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if search %}
+            <div class="alert alert-info">
+                Результаты поиска по запросу: <strong>«{{ search }}»</strong>
+                <a href="{{ url_for('main.catalog', category=current_category) }}" class="float-end">Сбросить</a>
+            </div>
+            {% endif %}
+
+            {% if products %}
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-6 col-md-4">
+                    <div class="product-card">
+                        <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-img-link">
+                            <div class="product-img">
+                                <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy"
+                                     onerror="this.src='https://via.placeholder.com/300x200/1a1a2e/eee?text=Product'">
+                                {% if product.old_price %}
+                                <span class="badge-sale">-{{ ((1 - product.price / product.old_price) * 100)|int }}%</span>
+                                {% endif %}
+                                {% if product.stock < 10 and product.stock > 0 %}
+                                <span class="badge-stock">Осталось {{ product.stock }}</span>
+                                {% elif product.stock == 0 %}
+                                <span class="badge-stock out">Нет в наличии</span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <div class="product-body">
+                            <div class="product-brand">{{ product.brand }}</div>
+                            <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-title">
+                                {{ product.name }}
+                            </a>
+                            <div class="product-rating">
+                                {% for i in range(5) %}
+                                    {% if i < product.rating|int %}
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    {% else %}
+                                    <i class="bi bi-star text-secondary"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                <span class="ms-1 text-muted small">{{ product.rating }}</span>
+                            </div>
+                            <div class="product-price">
+                                <span class="price-current">{{ "{:,.0f}".format(product.price) }} ₽</span>
+                                {% if product.old_price %}
+                                <span class="price-old">{{ "{:,.0f}".format(product.old_price) }} ₽</span>
+                                {% endif %}
+                            </div>
+                            {% if product.stock > 0 %}
+                                {% if current_user.is_authenticated %}
+                                <form action="{{ url_for('cart.add_to_cart', product_id=product.id) }}" method="post" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-cart-plus"></i> В корзину
+                                    </button>
+                                </form>
+                                {% else %}
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary btn-sm w-100 mt-2">
+                                    Войти для покупки
+                                </a>
+                                {% endif %}
+                            {% else %}
+                            <button class="btn btn-secondary btn-sm w-100 mt-2" disabled>Нет в наличии</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-search fs-1 text-muted"></i>
+                <h4 class="mt-3">Ничего не найдено</h4>
+                <p class="text-muted">Попробуйте изменить фильтры или поисковый запрос</p>
+                <a href="{{ url_for('main.catalog') }}" class="btn btn-primary">Сбросить фильтры</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
